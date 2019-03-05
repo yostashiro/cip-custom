@@ -71,25 +71,17 @@ class AbstractReportXlsx(ReportXlsx):
 
     def generate_xlsx_report(self, workbook, data, objects):
         report = objects
-
         self.row_pos = 0
-
         self._define_formats(workbook)
-
         report_name = self._get_report_name()
-        filters = self._get_report_filters(report)
+        filters = self._get_report_data(report)
         self.columns = self._get_report_columns(report)
-
         self.sheet = workbook.add_worksheet(report_name[:31])
-
         self._set_column_width()
-
         self._write_report_title(report_name)
-
-        self._write_filters(filters)
-
+        self._write_report(filters)
         self._generate_report_content(workbook, report)
-
+        self.sheet.fit_to_pages(1, 1) # report to fit into one page
 
     def _define_formats(self, workbook):
         """ Add cell formats to current workbook.
@@ -172,7 +164,7 @@ class AbstractReportXlsx(ReportXlsx):
         self.row_pos += 2
 
 
-    def _write_filters(self, filters):
+    def _write_report(self, filters):
         """Write one line per filters on starting on current line.
         Columns number for filter name is defined
         with `_get_col_count_filter_name` method.
@@ -331,20 +323,6 @@ class AbstractReportXlsx(ReportXlsx):
         raise NotImplementedError()
 
 
-    def _get_report_filters(self, report):
-        """
-            :return: the report filters as list
-
-            :Example:
-
-            [
-                ['first_filter_name', 'first_filter_value'],
-                ['second_filter_name', 'second_filter_value']
-            ]
-        """
-        raise NotImplementedError()
-
-
     def _get_col_count_filter_name(self):
         """
             :return: the columns number used for filter names.
@@ -390,7 +368,7 @@ class SpecsheetXlsx(AbstractReportXlsx):
             },
         }
 
-    def _get_report_filters(self, report):
+    def _get_report_data(self, report):
         report_date = fields.Datetime.to_string(
             fields.Datetime.context_timestamp(
                 report, datetime.now()
@@ -410,30 +388,6 @@ class SpecsheetXlsx(AbstractReportXlsx):
     def _get_col_count_filter_value(self):
         return 1
 
-    # def _get_periods(self, report):
-    #     periods = {
-    #         3: {
-    #             'header': report.p2,
-    #             'col_plus': 3
-    #         },
-    #         7: {
-    #             'header': report.p3,
-    #             'col_plus': 2
-    #         },
-    #         10: {
-    #             'header': report.p4,
-    #             'col_plus': 2
-    #         },
-    #         13: {
-    #             'header': report.p5,
-    #             'col_plus': 2
-    #         },
-    #         16: {
-    #             'header': report.p6,
-    #             'col_plus': 2
-    #         }
-    #     }
-    #     return periods
 
     def _generate_report_content(self, workbook, report):
         # periods = self._get_periods(report)
