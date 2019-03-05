@@ -11,9 +11,12 @@ class SpecsheetReport(models.TransientModel):
     order_id = fields.Many2one(
         'mrp.production',
     )
-    limit_locs = fields.Boolean()
-    website_published = fields.Boolean()
-    categ_name = fields.Char()
+    sale_order_id = fields.Many2one(
+        'sale.order',
+    )
+    # limit_locs = fields.Boolean()
+    # website_published = fields.Boolean()
+    # categ_name = fields.Char()
 
     # Data fields, used to browse report data
     categ_id = fields.Many2one(

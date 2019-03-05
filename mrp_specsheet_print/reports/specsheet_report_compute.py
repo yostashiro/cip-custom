@@ -18,5 +18,11 @@ class SpecsheetReportCompute(models.TransientModel):
     @api.multi
     def print_report(self):
         self.ensure_one()
+        order = self.order_id
+        if order.procurement_group_id:
+            sale_order = self.env['sale.order'].search([
+                ('procurement_group_id', '=', order.procurement_group_id.id)])
+            if sale_order:
+                self.write({'sale_order_id': sale_order.id})
         report_name = 'mrp_specsheet_print.specsheet_report'
         return self.env['report'].get_action(self, report_name)

@@ -4,21 +4,16 @@
 # Copyright 2019 Quartile Limited
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
 
-from datetime import datetime
-
-from odoo import models, fields, api, _
-from odoo.addons.abstract_report_xlsx.reports \
-    import stock_abstract_report_xlsx
-from odoo.report import report_sxw
-
-
-
 from cStringIO import StringIO
 import xlsxwriter
 from xlsxwriter.utility import xl_col_to_name  # OSCG
-from openerp.addons.report_xlsx.report.report_xlsx import ReportXlsx
 from io import BytesIO
 import base64
+from datetime import datetime
+
+from odoo import models, fields, api, _
+from odoo.report import report_sxw
+from odoo.addons.report_xlsx.report.report_xlsx import ReportXlsx
 
 
 class AbstractReportXlsx(ReportXlsx):
@@ -51,7 +46,7 @@ class AbstractReportXlsx(ReportXlsx):
         self.format_percent_bold_italic = None
         self.format_wrap = None  # added by OSCG
         self.format_emphasis = None  # added by OSCG
-
+        self.format_vertical_text = None
 
     def create_xlsx_report(self, ids, data, report):
         """ Overrides method to add constant_memory option used for large files
@@ -62,45 +57,36 @@ class AbstractReportXlsx(ReportXlsx):
             self.env.cr, self.env.uid, ids, self.env.context)
         self.parser_instance.set_context(objs, data, ids, 'xlsx')
         file_data = StringIO()
-        workbook = xlsxwriter.Workbook(file_data, {'constant_memory': True})
+        # 'constant_memory' is set to False here as XlsxWriter does not allow
+        # to write or format merged cells
+        # workbook = xlsxwriter.Workbook(file_data, {'constant_memory': True})
+        workbook = xlsxwriter.Workbook(file_data, {'constant_memory': False})
         self.generate_xlsx_report(workbook, data, objs)
         workbook.close()
         file_data.seek(0)
         return (file_data.read(), 'xlsx')
-
 
     def generate_xlsx_report(self, workbook, data, objects):
         report = objects
         self.row_pos = 0
         self._define_formats(workbook)
         report_name = self._get_report_name()
-        filters = self._get_report_data(report)
+        # report_data = self._get_report_data(report)
         self.columns = self._get_report_columns(report)
         self.sheet = workbook.add_worksheet(report_name[:31])
         self._set_column_width()
         self._write_report_title(report_name)
-        self._write_report(filters)
+        self._write_report(self._get_report_data(report))
+        self._write_report(self._get_paint_fields(), 'Paint')
+        self._write_report(self._get_neck_fields(), 'Neck')
+        self._generate_report_content(workbook, report)
+        self._write_report(self._get_plek_fields(), 'PLEK')
         self._generate_report_content(workbook, report)
         self.sheet.fit_to_pages(1, 1) # report to fit into one page
 
     def _define_formats(self, workbook):
         """ Add cell formats to current workbook.
         Those formats can be used on all cell.
-
-        Available formats are :
-         * format_bold
-         * format_right
-         * format_right_bold_italic
-         * format_header_left
-         * format_header_center
-         * format_header_right
-         * format_header_amount
-         * format_amount
-         * format_number  # added by OSCG
-         * format_percent  # added by OSCG
-         * format_percent_bold_italic
-         * format_wrap  # added by OSCG
-         * format_emphasis  # added by OSCG
         """
         self.format_bold = workbook.add_format({'bold': True})
         self.format_right = workbook.add_format({'align': 'right'})
@@ -143,7 +129,9 @@ class AbstractReportXlsx(ReportXlsx):
         self.format_wrap.set_text_wrap()  # added by OSCG
         self.format_emphasis = workbook.add_format({'bold': True})  # OSCG
         self.format_emphasis.set_font_color('red')  # OSCG
-
+        self.format_vertical_text = workbook.add_format(
+            {'bold': 1, 'valign': 'vcenter', 'bg_color': '#FFFFCC'})
+        self.format_vertical_text.set_rotation(90)
 
     def _set_column_width(self):
         """Set width for all defined columns.
@@ -164,18 +152,19 @@ class AbstractReportXlsx(ReportXlsx):
         self.row_pos += 2
 
 
-    def _write_report(self, filters):
+    def _write_report(self, report_data, section=None):
         """Write one line per filters on starting on current line.
         Columns number for filter name is defined
         with `_get_col_count_filter_name` method.
         Columns number for filter value is define
         with `_get_col_count_filter_value` method.
         """
-        col_name = 0
+        col_name = 1
         col_count_filter_name = self._get_col_count_filter_name()
         col_count_filter_value = self._get_col_count_filter_value()
         col_value = col_name + col_count_filter_name
-        for title, value in filters:
+        begin_row_pos = self.row_pos
+        for title, value in report_data:
             if col_count_filter_name == 1:
                 self.sheet.write_string(
                     self.row_pos, col_name, title, self.format_header_left
@@ -197,6 +186,11 @@ class AbstractReportXlsx(ReportXlsx):
                     value
                 )
             self.row_pos += 1
+        self.sheet.merge_range(
+            begin_row_pos, 0,
+            self.row_pos - 1, 0,
+            section, self.format_vertical_text
+        )
         self.row_pos += 1
 
 
@@ -210,18 +204,6 @@ class AbstractReportXlsx(ReportXlsx):
         )
         self.row_pos += 1
 
-
-    def write_header_periods(self, periods):
-        row_pos = self.row_pos
-        for col_pos, column in periods.iteritems():
-            self.sheet.merge_range(
-                row_pos, col_pos, row_pos, col_pos + column['col_plus'],
-                column['header'],
-                self.format_header_center
-            )
-        self.row_pos += 1
-
-
     def write_array_header(self):
         """Write array header on current line using all defined columns name.
         Columns are defined with `_get_report_columns` method.
@@ -230,8 +212,7 @@ class AbstractReportXlsx(ReportXlsx):
             self.sheet.write(self.row_pos, col_pos, column['header'],
                              self.format_header_center)
         self.row_pos += 1
-        self.sheet.freeze_panes(self.row_pos, 3)
-
+        # self.sheet.freeze_panes(self.row_pos, 3)
 
     # def write_line(self, line_object):
     def write_line(self, line_object, height=False):  # OSCG
@@ -346,21 +327,21 @@ class SpecsheetXlsx(AbstractReportXlsx):
             name, table, rml, parser, header, store)
 
     def _get_report_name(self):
-        return _('Spec Sheet Report')
+        return _('Spec Sheet')
 
     def _get_report_columns(self, report):
         return {
-            0: {
+            1: {
                 'header': _('Product'),
                 'field': 'product_name',
-                'width': 30
+                'width': 45
             },
-            1: {
+            2: {
                 'header': _('Product Category'),
                 'field': 'categ_name',
                 'width': 32
             },
-            2: {
+            3: {
                 'header': _('Quantity'),
                 'field': 'quantity',
                 'type': 'number',
@@ -370,14 +351,36 @@ class SpecsheetXlsx(AbstractReportXlsx):
 
     def _get_report_data(self, report):
         report_date = fields.Datetime.to_string(
-            fields.Datetime.context_timestamp(
-                report, datetime.now()
-            )
-        )
+            fields.Datetime.context_timestamp(report, datetime.now()))
         return [
-            [_('Remarks'), report.order_id.remarks],
-            [_('Model'), report.order_id.product_id.name],
             [_('Report Date'), report_date],
+            [_('Model'), report.order_id.product_id.name],
+            [_('Deadline End'), report.order_id.date_planned_finished],
+            [_('Customer'), report.sale_order_id.partner_id.name if report.sale_order_id else ''],
+            [_('Remarks'), report.order_id.remarks],
+        ]
+
+    def _get_paint_fields(self):
+        return [
+            [_('Paint By'), ''],
+            [_('Paint Operation Number'), ''],
+            [_('Start, Ship Date'), ''],
+            [_('Finish, Receive Date'), ''],
+        ]
+
+    def _get_neck_fields(self):
+        return [
+            [_('Neck In Stock'), 'YES   /   NO'],
+            [_('Neck Operation Number'), ''],
+            [_('Order Date'), ''],
+            [_('In Stock Date'), ''],
+        ]
+
+    def _get_plek_fields(self):
+        return [
+            [_('PLEK By'), ''],
+            [_('PLEK Operation Number'), ''],
+            [_('Fret Treated By'), ''],
         ]
 
     def _get_col_count_filter_name(self):
@@ -388,11 +391,10 @@ class SpecsheetXlsx(AbstractReportXlsx):
 
 
     def _generate_report_content(self, workbook, report):
-        # periods = self._get_periods(report)
-        # self.write_header_periods(periods)
         self.write_array_header()
         for line in report.line_ids:
             self.write_line(line)
+        self.row_pos += 1
 
 SpecsheetXlsx(
     'report.mrp_specsheet_print.specsheet_report',
