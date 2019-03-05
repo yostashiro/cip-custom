@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <form>
                 <group>
-                    <field name="threshold_date"/>
+                    <!--<field name="threshold_date"/>-->
                     <field name="limit_locs"/>
                     <field name="website_published"/>
                     <field name="categ_id"/>

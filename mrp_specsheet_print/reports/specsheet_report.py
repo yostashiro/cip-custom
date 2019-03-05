@@ -1,28 +1,21 @@
 # -*- coding: utf-8 -*-
-# Copyright 2017 Quartile Limited
-# License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
+# Copyright 2019 Quartile Limited
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import models, fields
 
 
 class SpecsheetReport(models.TransientModel):
-    # class fields are defined here
     _name = 'specsheet.report'
 
     order_id = fields.Many2one(
         'mrp.production',
     )
-    threshold_date = fields.Date()
     limit_locs = fields.Boolean()
     website_published = fields.Boolean()
     categ_name = fields.Char()
-    p2 = fields.Char()
-    p3 = fields.Char()
-    p4 = fields.Char()
-    p5 = fields.Char()
-    p6 = fields.Char()
 
-    # # Data fields, used to browse report data
+    # Data fields, used to browse report data
     categ_id = fields.Many2one(
         comodel_name='product.category',
     )

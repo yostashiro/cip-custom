@@ -11,8 +11,7 @@
     "license": "AGPL-3",
     "installable": True,
     "depends": [
-        "mrp",
-        # "abstract_report_xlsx",
+        "sale_order_line_mrp_remarks",
         "report_xlsx",
     ],
     "data": [

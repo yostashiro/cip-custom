@@ -346,7 +346,7 @@ class SpecsheetXlsx(AbstractReportXlsx):
             name, table, rml, parser, header, store)
 
     def _get_report_name(self):
-        return _('Spec Sheet eport')
+        return _('Spec Sheet Report')
 
     def _get_report_columns(self, report):
         return {
@@ -361,8 +361,8 @@ class SpecsheetXlsx(AbstractReportXlsx):
                 'width': 32
             },
             2: {
-                'header': _('Inv. on Hand'),
-                'field': 'bal1',
+                'header': _('Quantity'),
+                'field': 'quantity',
                 'type': 'number',
                 'width': 8
             },
@@ -375,11 +375,12 @@ class SpecsheetXlsx(AbstractReportXlsx):
             )
         )
         return [
-            [_('Order'), report.order_id.product_id.name],
+            [_('Remarks'), report.order_id.remarks],
+            [_('Model'), report.order_id.product_id.name],
             [_('Report Date'), report_date],
-            [_('Threshold Date'), report.threshold_date],
-            [_('Limit Locations'), 'True' if report.limit_locs else 'False'],
-            [_('Product Category'), report.categ_name or 'All Categories'],
+            # [_('Threshold Date'), report.threshold_date],
+            # [_('Limit Locations'), 'True' if report.limit_locs else 'False'],
+            # [_('Product Category'), report.categ_name or 'All Categories'],
         ]
 
     def _get_col_count_filter_name(self):
@@ -399,6 +400,5 @@ class SpecsheetXlsx(AbstractReportXlsx):
 SpecsheetXlsx(
     'report.mrp_specsheet_print.specsheet_report',
     'specsheet.report',
-    # 'mrp.production',
     parser=report_sxw.rml_parse
 )
