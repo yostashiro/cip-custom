@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="specsheet_report_wizard" model="ir.ui.view">
+        <field name="name">specsheet.report.wizard</field>
+        <field name="model">specsheet.report.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="threshold_date"/>
+                    <field name="limit_locs"/>
+                    <field name="website_published"/>
+                    <field name="categ_id"/>
+                </group>
+                <footer>
+                    <button name="action_export_xlsx"
+                            type="object"
+                            string="Export XLSX"
+                            class="oe_highlight"/>
+                    or
+                    <button special="cancel"
+                            string="Cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+
+    <act_window
+        id="action_specsheet_report_wizard"
+        name="Spec Sheet Print"
+        res_model="specsheet.report.wizard"
+        src_model="mrp.production"
+        view_mode="form"
+        target="new"
+        key2="client_action_multi"
+    />
+
+    <menuitem
+        parent="mrp.menu_mrp_manufacturing"
+        action="action_specsheet_report_wizard"
+        id="menu_specsheet_report_wizard"
+        sequence="50"
+    />
+
+</odoo>
