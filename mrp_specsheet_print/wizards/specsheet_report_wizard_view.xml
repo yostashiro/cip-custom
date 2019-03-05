@@ -6,12 +6,12 @@
         <field name="model">specsheet.report.wizard</field>
         <field name="arch" type="xml">
             <form>
-                <group>
-                    <!--<field name="threshold_date"/>-->
-                    <field name="limit_locs"/>
-                    <field name="website_published"/>
-                    <field name="categ_id"/>
-                </group>
+                <!--<group>-->
+                    <!--&lt;!&ndash;<field name="threshold_date"/>&ndash;&gt;-->
+                    <!--<field name="limit_locs"/>-->
+                    <!--<field name="website_published"/>-->
+                    <!--<field name="categ_id"/>-->
+                <!--</group>-->
                 <footer>
                     <button name="action_export_xlsx"
                             type="object"

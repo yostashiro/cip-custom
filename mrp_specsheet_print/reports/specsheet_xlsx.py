@@ -378,9 +378,6 @@ class SpecsheetXlsx(AbstractReportXlsx):
             [_('Remarks'), report.order_id.remarks],
             [_('Model'), report.order_id.product_id.name],
             [_('Report Date'), report_date],
-            # [_('Threshold Date'), report.threshold_date],
-            # [_('Limit Locations'), 'True' if report.limit_locs else 'False'],
-            # [_('Product Category'), report.categ_name or 'All Categories'],
         ]
 
     def _get_col_count_filter_name(self):
