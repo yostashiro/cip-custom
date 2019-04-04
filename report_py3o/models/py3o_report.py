@@ -10,6 +10,7 @@ import os
 import cgi
 from contextlib import closing
 import subprocess
+from time import sleep
 
 import pkg_resources
 import sys
@@ -384,6 +385,7 @@ class Py3oReport(models.TransientModel):
         # consumption...
         # ... but odoo wants the whole data in memory anyways :)
 
+        sleep(3)
         with open(result_path, 'r+b') as fd:
             res = fd.read()
         self._cleanup_tempfiles(set(reports_path))
